@@ -21,9 +21,21 @@ def generate_tables(restaurant_id: int, req: GenerateTableReq, db: Session = Dep
     for i in range(1, req.count + 1):
         url = f"https://menu3d.app/{slug}?table={i}"
         img = qrcode.make(url)
-        path = f"uploads/qr_{restaurant_id}_table_{i}.png"
+        path = f"/tmp/qr_{restaurant_id}_table_{i}.png"
         img.save(path)
-        qr_url = f"http://localhost:8000/{path}"
+        
+        # Upload to Cloudinary since Vercel is read-only
+        import cloudinary.uploader
+        result = cloudinary.uploader.upload(
+            path,
+            folder="menu3d/qrcodes"
+        )
+        qr_url = result.get("secure_url")
+        
+        try:
+            os.remove(path)
+        except Exception:
+            pass
         
         db_table = db.query(models.Table).filter(models.Table.restaurant_id == restaurant_id, models.Table.table_number == i).first()
         if not db_table:
