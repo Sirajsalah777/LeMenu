@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+pillow
+qrcode
+python-multipart
+cloudinary
+python-dotenv
+pydantic
+aiofiles
