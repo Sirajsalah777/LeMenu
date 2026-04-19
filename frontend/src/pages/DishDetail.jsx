@@ -5,7 +5,7 @@ import Viewer360 from '../components/Viewer360';
 import VideoPlayer from '../components/VideoPlayer';
 import IngredientsList from '../components/IngredientsList';
 
-const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
+const API_URL = import.meta.env.PROD ? '/_/backend' : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
 
 export default function DishDetail() {
   const { slug, dishId } = useParams();

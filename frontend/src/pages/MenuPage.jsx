@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import DishCard from '../components/DishCard';
 
-const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
+const API_URL = import.meta.env.PROD ? '/_/backend' : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
 
 export default function MenuPage() {
   const { slug } = useParams();
