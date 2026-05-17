@@ -1,17 +1,19 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from dotenv import load_dotenv
 
-# Determine default SQLite path: use /tmp on Vercel, else local directory
-default_sqlite_path = "sqlite:////tmp/menu_v2.db" if os.getenv("VERCEL") else "sqlite:///./menu_v2.db"
-DATABASE_URL = os.getenv("DATABASE_URL", default_sqlite_path)
+load_dotenv()
 
-engine_args = {}
+default_sqlite = "sqlite:////tmp/menu_v2.db" if os.getenv("VERCEL") else "sqlite:///./menu_v2.db"
+DATABASE_URL = os.getenv("DATABASE_URL", default_sqlite)
+
+engine_args = {"pool_pre_ping": True}
 if "sqlite" in DATABASE_URL:
     engine_args["connect_args"] = {"check_same_thread": False}
-elif "postgres" in DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    # SQLAlchemy requires postgresql:// instead of postgres://
+elif DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    engine_args["connect_args"] = {"sslmode": "require"}
 
 engine = create_engine(DATABASE_URL, **engine_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

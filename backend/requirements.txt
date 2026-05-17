@@ -8,3 +8,7 @@ cloudinary
 python-dotenv
 pydantic
 aiofiles
+psycopg2-binary
+passlib[bcrypt]
+bcrypt<5
+python-jose[cryptography]

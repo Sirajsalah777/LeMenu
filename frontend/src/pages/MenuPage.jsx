@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import DishCard from '../components/DishCard';
 
-const API_URL = import.meta.env.PROD ? '/_/backend' : (import.meta.env.VITE_API_URL || 'http://localhost:8000');
+const API_URL = import.meta.env.PROD ? '/_/backend' : (import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`);
 
 export default function MenuPage() {
   const { slug } = useParams();
@@ -17,6 +17,9 @@ export default function MenuPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (slug === 'admin') return;
+    
+    setLoading(true);
     axios.get(`${API_URL}/api/restaurants/${slug}`)
       .then(res => {
         setRestaurant(res.data.restaurant);
@@ -24,14 +27,12 @@ export default function MenuPage() {
         if (res.data.restaurant.theme_color) {
           document.documentElement.style.setProperty('--primary-color', res.data.restaurant.theme_color);
         }
-        
-        // Log scan event
-        axios.post(`${API_URL}/api/analytics/log?event_type=scan&restaurant_id=${res.data.restaurant.id}`);
 
-        // Auto-open first category
         const cats = Object.keys(res.data.dishes_by_category);
         if (cats.length > 0) setOpenCategory(cats[0]);
         setLoading(false);
+
+        axios.post(`${API_URL}/api/analytics/log?event_type=scan&restaurant_id=${res.data.restaurant.id}`).catch(() => {});
       })
       .catch(err => {
         setError("Restaurant non trouvé.");

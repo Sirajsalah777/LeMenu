@@ -52,6 +52,52 @@ def get_me(current_restaurant: models.Restaurant = Depends(get_current_restauran
         "phone": current_restaurant.phone
     }
 
+
+def _dish_dict(dish: models.Dish) -> dict:
+    return {
+        "id": dish.id,
+        "name": dish.name,
+        "name_ar": dish.name_ar,
+        "name_en": dish.name_en,
+        "description": dish.description,
+        "category": dish.category,
+        "price": dish.price,
+        "is_available": dish.is_available,
+        "photos": dish.photos,
+        "video_url": dish.video_url,
+        "model_url": dish.model_url,
+        "allergens": dish.allergens,
+        "weight_grams": dish.weight_grams,
+        "calories": dish.calories,
+        "sort_order": dish.sort_order,
+    }
+
+
+@router.get("/me/dashboard")
+def get_dashboard(
+    db: Session = Depends(get_db),
+    current_restaurant: models.Restaurant = Depends(get_current_restaurant),
+):
+    dishes = (
+        db.query(models.Dish)
+        .filter(models.Dish.restaurant_id == current_restaurant.id)
+        .order_by(models.Dish.sort_order)
+        .all()
+    )
+    return {
+        "restaurant": {
+            "id": current_restaurant.id,
+            "name": current_restaurant.name,
+            "slug": current_restaurant.slug,
+            "logo_url": current_restaurant.logo_url,
+            "theme_color": current_restaurant.theme_color,
+            "address": current_restaurant.address,
+            "phone": current_restaurant.phone,
+        },
+        "dishes": [_dish_dict(d) for d in dishes],
+    }
+
+
 @router.get("/{slug}")
 def get_restaurant(slug: str, db: Session = Depends(get_db)):
     rest = db.query(models.Restaurant).filter(models.Restaurant.slug == slug).first()

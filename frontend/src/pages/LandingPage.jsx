@@ -1,45 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
+    let html5QrCode;
+    
     if (showScanner) {
-      const scanner = new Html5QrcodeScanner(
-        "reader", 
+      html5QrCode = new Html5Qrcode("reader");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
-
-      scanner.render((decodedText) => {
-        // Assume decodedText is a URL like http://localhost:5173/gusto or http://localhost:5173/gusto?table=5
-        try {
-            const url = new URL(decodedText);
-            const path = url.pathname + url.search;
-            scanner.clear();
-            setShowScanner(false);
-            navigate(path);
-        } catch (e) {
-            // If not a full URL, try to use it as a path if it starts with /
-            if (decodedText.startsWith('/')) {
-                scanner.clear();
+        (decodedText) => {
+          let targetPath = null;
+          let text = decodedText.trim();
+          
+          try {
+              const url = new URL(text);
+              targetPath = url.pathname + url.search;
+          } catch (e) {
+              if (text.startsWith('/')) {
+                  targetPath = text;
+              } else if (/^[a-zA-Z0-9_-]+$/.test(text)) {
+                  targetPath = '/' + text;
+              } else {
+                  alert("QR Code non reconnu : " + text);
+                  return;
+              }
+          }
+          
+          if (targetPath) {
+              if (targetPath.length > 1 && targetPath.endsWith('/')) {
+                  targetPath = targetPath.slice(0, -1);
+              }
+              html5QrCode.stop().then(() => {
                 setShowScanner(false);
-                navigate(decodedText);
-            } else {
-                alert("QR Code non reconnu : " + decodedText);
-            }
+                navigate(targetPath);
+              }).catch(err => {
+                console.warn(err);
+                setShowScanner(false);
+                navigate(targetPath);
+              });
+          }
+        },
+        (errorMessage) => {
+          // silent error during scanning
         }
-      }, (error) => {
-        // silent error during scanning
+      ).catch((err) => {
+        console.warn("Camera start failed callback", err);
       });
-
-      return () => {
-        scanner.clear().catch(e => console.warn("Scanner cleanup failed", e));
-      };
     }
+
+    return () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(e => console.warn("Scanner cleanup failed", e));
+      }
+    };
   }, [showScanner, navigate]);
 
   return (

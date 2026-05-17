@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import axios from 'axios';
+import api from '../lib/apiClient';
 
 export default function DishForm() {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     name_ar: '',
@@ -23,13 +25,37 @@ export default function DishForm() {
     model_url: ''
   });
 
+  useEffect(() => {
+    if (id) {
+      fetchDish();
+    }
+  }, [id]);
+
+  const fetchDish = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/dishes/${id}`);
+      const dish = res.data;
+      setFormData({
+        ...dish,
+        allergens: typeof dish.allergens === 'string' ? JSON.parse(dish.allergens) : dish.allergens || [],
+        photos: typeof dish.photos === 'string' ? JSON.parse(dish.photos) : dish.photos || []
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors du chargement du plat');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const categories = ['Entrées', 'Plats', 'Desserts', 'Boissons', 'Spécialités'];
   const allergenOptions = ['Gluten', 'Lactose', 'Fruits à coque', 'Oeufs', 'Poisson', 'Soja', 'Sésame', 'Arachides'];
 
   const uploadFile = async (file, endpoint) => {
     const data = new FormData();
     data.append('file', file);
-    const res = await axios.post(`http://localhost:8000/api/media/upload/${endpoint}`, data);
+    const res = await api.post(`/api/media/upload/${endpoint}`, data);
     return res.data.url;
   };
 
@@ -85,9 +111,16 @@ export default function DishForm() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:8000/api/dishes/', form, {
+      const config = {
         headers: { Authorization: `Bearer ${token}` }
-      });
+      };
+
+      if (id) {
+        await api.put(`/api/dishes/${id}`, form, config);
+      } else {
+        await api.post('/api/dishes/', form, config);
+      }
+      
       alert('Plat sauvegardé avec succès');
       navigate('/dashboard');
     } catch (err) {
@@ -95,6 +128,15 @@ export default function DishForm() {
       alert('Erreur lors de la sauvegarde');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem' }}>
+        <div className="spinner"></div>
+        <div style={{ color: '#6b7280', fontWeight: '500' }}>Chargement du plat...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="layout">
