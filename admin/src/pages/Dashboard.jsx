@@ -1,12 +1,11 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '../lib/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useDashboard } from '../hooks/useDashboard';
 import { clearDashboardCache } from '../lib/dashboardCache';
 import LoadingScreen from '../components/LoadingScreen';
-
-const QRCodeSVG = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeSVG })));
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('plats');
@@ -182,16 +181,14 @@ export default function Dashboard() {
             <div className="qr-card" style={{ padding: '40px', display: 'inline-block' }}>
               <div className="qr-card-header" style={{ fontSize: '20px' }}>{restaurant.name}</div>
               <div className="qr-card-body" style={{ padding: '20px 0' }}>
-                <Suspense fallback={<div className="spinner" style={{ margin: '0 auto' }} />}>
-                  <QRCodeSVG
-                    id="main-qr"
-                    value={menuPreviewUrl}
-                    size={240}
-                    level="H"
-                    includeMargin
-                    fgColor={restaurant.theme_color || '#000000'}
-                  />
-                </Suspense>
+                <QRCodeSVG
+                  id="main-qr"
+                  value={menuPreviewUrl}
+                  size={240}
+                  level="H"
+                  includeMargin
+                  fgColor={restaurant.theme_color || '#000000'}
+                />
               </div>
               <div className="qr-card-url" style={{ fontSize: '12px', marginTop: '15px' }}>
                 {menuPreviewUrl}

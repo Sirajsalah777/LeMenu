@@ -24,7 +24,8 @@ export function useDashboard({ onUnauthorized } = {}) {
         onUnauthorizedRef.current?.();
         return;
       }
-      setError((prev) => prev || 'Impossible de charger les données. Réessayez.');
+      const slow = err.code === 'ECONNABORTED' || !err.response;
+      setError((prev) => prev || (slow ? 'Connexion lente au serveur. Réessayez.' : 'Impossible de charger les données.'));
     } finally {
       setLoading(false);
     }
