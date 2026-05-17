@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Viewer360 from '../components/Viewer360';
 import VideoPlayer from '../components/VideoPlayer';
 import IngredientsList from '../components/IngredientsList';
+
+const Viewer360 = lazy(() => import('../components/Viewer360'));
 
 const API_URL = import.meta.env.PROD ? '/_/backend' : (import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`);
 
@@ -15,20 +16,24 @@ export default function DishDetail() {
 
   useEffect(() => {
     axios.get(`${API_URL}/api/restaurants/${slug}`)
-      .then(res => {
+      .then((res) => {
         let found = null;
-        Object.values(res.data.dishes_by_category).forEach(catDishes => {
-          const d = catDishes.find(d => d.id.toString() === dishId);
+        Object.values(res.data.dishes_by_category).forEach((catDishes) => {
+          const d = catDishes.find((item) => item.id.toString() === dishId);
           if (d) found = d;
         });
         setDish(found);
         if (found) {
-            axios.post(`${API_URL}/api/analytics/log?event_type=dish_view&restaurant_id=${res.data.restaurant.id}&target_id=${found.id}`);
+          axios
+            .post(`${API_URL}/api/analytics/log?event_type=dish_view&restaurant_id=${res.data.restaurant.id}&target_id=${found.id}`)
+            .catch(() => {});
         }
-      });
+      })
+      .catch(() => setDish(false));
   }, [slug, dishId]);
 
-  if (!dish) return <div className="loader">Chargement...</div>;
+  if (dish === null) return <div className="loader">Chargement...</div>;
+  if (dish === false) return <div className="error">Plat introuvable</div>;
 
   return (
     <div className="dish-detail-page pb-safe">
@@ -43,7 +48,11 @@ export default function DishDetail() {
       </div>
 
       <div className="tab-content">
-        {activeTab === '3d' && <Viewer360 dish={dish} />}
+        {activeTab === '3d' && (
+          <Suspense fallback={<div className="loader">Chargement 3D...</div>}>
+            <Viewer360 dish={dish} />
+          </Suspense>
+        )}
         {activeTab === 'video' && <VideoPlayer dish={dish} />}
         {activeTab === 'ingredients' && <IngredientsList dish={dish} />}
       </div>

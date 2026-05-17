@@ -536,6 +536,31 @@ body {
   font-weight: 500;
 }
 
+.model-viewer-wrap model-viewer {
+  border-radius: var(--radius-sm);
+}
+
+.photo-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+}
+
+.photo-dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #d6d3d1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.photo-dots button.active {
+  background: var(--primary-color);
+}
+
 /* Video */
 .video-container { padding: 16px; text-align: center; }
 .video-container .w-100 { width: 100%; border-radius: var(--radius-sm); }
